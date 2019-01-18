@@ -2,6 +2,7 @@ package com.example.locationupdatesforegroundservice;
 
 import android.app.ActivityManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -209,6 +210,21 @@ public class LocationUpdatesService extends Service {
     private Notification getNotification() {
         Intent intent = new Intent(this, LocationUpdatesService.class);
 
+        //create channel
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder builder;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            String CHANNEL_ID = "Location Channel";
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "LocationChannel",
+                    NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Location channel description");
+            manager.createNotificationChannel(channel);
+            builder = new NotificationCompat.Builder(this, CHANNEL_ID);
+        } else {
+            builder = new NotificationCompat.Builder(this);
+        }
+
         CharSequence text = Utils.getLocationText(mLocation);
 
         // Extra to help us figure out if we arrived in onStartCommand via the notification or not.
@@ -222,9 +238,8 @@ public class LocationUpdatesService extends Service {
         PendingIntent activityPendingIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, MainActivity.class), 0);
 
-        return new NotificationCompat.Builder(this)
-                .addAction(android.R.drawable.ic_media_play, getString(R.string.launch_activity),
-                        activityPendingIntent)
+        return builder.addAction(android.R.drawable.ic_media_play, getString(R.string.launch_activity),
+                activityPendingIntent)
                 .addAction(android.R.drawable.ic_media_pause, getString(R.string.remove_location_updates),
                         servicePendingIntent)
                 .setContentText(text)
